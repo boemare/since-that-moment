@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Since That Moment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-deep: #0a0a0f;
+      --bg-card: #111118;
+      --bg-card-hover: #16161f;
+      --border-subtle: rgba(255,255,255,0.06);
+      --text-primary: #e8e6e1;
+      --text-secondary: rgba(232,230,225,0.5);
+      --text-muted: rgba(232,230,225,0.25);
+      --green-dim: #1a3a1a;
+      --green-soft: #2d6a2d;
+      --green-mid: #3da33d;
+      --green-bright: #4ade4a;
+      --tile-past: rgba(255,255,255,0.12);
+      --tile-future: rgba(255,255,255,0.035);
+      --accent-warm: #c9a96e;
+      --accent-warm-dim: rgba(201,169,110,0.15);
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Subtle noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Ambient glow */
+    .ambient-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(150px);
+      opacity: 0.07;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-1 {
+      top: -200px;
+      right: -100px;
+      background: var(--green-bright);
+    }
+    .glow-2 {
+      bottom: -300px;
+      left: -200px;
+      background: var(--accent-warm);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .header-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+    .header-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text-primary);
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .header-timestamp {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+    .header-timestamp span {
+      color: var(--accent-warm);
+      opacity: 0.7;
+    }
+
+    /* Counter */
+    .counter-section {
+      margin-bottom: 56px;
+    }
+    .counter-grid {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .counter-unit {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 28px 20px 22px;
+      min-width: 140px;
+      text-align: center;
+      flex: 1;
+      max-width: 200px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease;
+    }
+    .counter-unit:hover {
+      border-color: rgba(255,255,255,0.1);
+    }
+    .counter-unit::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-warm), transparent);
+      opacity: 0.4;
+    }
+    .counter-value {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 8px;
+      font-variant-numeric: tabular-nums;
+      background: linear-gradient(180deg, var(--text-primary) 30%, rgba(232,230,225,0.6));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .counter-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    /* Year Grid */
+    .grid-section {
+      margin-bottom: 56px;
+    }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-weight: 400;
+      color: var(--text-primary);
+    }
+    .section-subtitle {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .year-grid-wrapper {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 24px;
+      overflow-x: auto;
+    }
+    .month-labels {
+      display: flex;
+      margin-bottom: 6px;
+      padding-left: 0;
+    }
+    .month-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .year-grid {
+      display: grid;
+      grid-template-columns: repeat(53, 1fr);
+      grid-template-rows: repeat(7, 1fr);
+      gap: 3px;
+      grid-auto-flow: column;
+    }
+    .day-tile {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 2.5px;
+      position: relative;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      min-width: 10px;
+    }
+    .day-tile:hover {
+      transform: scale(1.8);
+      z-index: 10;
+    }
+    .day-tile.past {
+      background: var(--tile-past);
+    }
+    .day-tile.future {
+      background: var(--tile-future);
+    }
+    .day-tile.counter-day {
+      background: var(--green-soft);
+      box-shadow: 0 0 4px rgba(74,222,74,0.15);
+    }
+    .day-tile.counter-day.recent {
+      background: var(--green-mid);
+      box-shadow: 0 0 6px rgba(74,222,74,0.2);
+    }
+    .day-tile.today {
+      background: var(--green-bright) !important;
+      box-shadow: 0 0 12px rgba(74,222,74,0.4);
+      animation: pulse-today 2s ease-in-out infinite;
+    }
+    @keyframes pulse-today {
+      0%, 100% { box-shadow: 0 0 8px rgba(74,222,74,0.3); }
+      50% { box-shadow: 0 0 20px rgba(74,222,74,0.6); }
+    }
+    .day-tile.empty {
+      background: transparent;
+    }
+
+    /* Tooltip */
+    .day-tile[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a24;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-primary);
+      font-size: 0.6rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* Milestones */
+    .milestones-section {
+      margin-bottom: 56px;
+    }
+    .milestones-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .milestone-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 18px;
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+    .milestone-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .milestone-card.reached {
+      border-color: rgba(74,222,74,0.2);
+      background: rgba(74,222,74,0.03);
+    }
+    .milestone-card.reached .milestone-icon {
+      color: var(--green-bright);
+    }
+    .milestone-card.next {
+      border-color: var(--accent-warm-dim);
+    }
+    .milestone-icon {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+      display: block;
+      color: var(--text-muted);
+    }
+    .milestone-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .milestone-date {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+    .milestone-status {
+      font-size: 0.6rem;
+      margin-top: 6px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .milestone-status.done {
+      color: var(--green-mid);
+    }
+    .milestone-status.upcoming {
+      color: var(--accent-warm);
+      opacity: 0.7;
+    }
+
+    /* Clocks & Stats row */
+    .info-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 56px;
+    }
+    @media (max-width: 600px) {
+      .info-row { grid-template-columns: 1fr; }
+    }
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .info-card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+    .clock-time {
+      font-size: 1.5rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 2px;
+    }
+    .clock-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+    .clock-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .clock-row:last-child { margin-bottom: 0; }
+
+    /* Year progress ring */
+    .progress-section {
+      margin-bottom: 56px;
+    }
+    .progress-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 28px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    @media (max-width: 500px) {
+      .progress-card { flex-direction: column; gap: 20px; }
+    }
+    .ring-container {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+    .ring-bg {
+      stroke: rgba(255,255,255,0.05);
+    }
+    .ring-fill {
+      stroke: var(--green-mid);
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s ease;
+    }
+    .ring-center-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-percent {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .ring-label {
+      font-size: 0.55rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+    .progress-stats {
+      flex: 1;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.75rem;
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { color: var(--text-secondary); }
+    .stat-value { color: var(--text-primary); font-weight: 500; }
+
+    /* Weekly breakdown */
+    .weekly-section {
+      margin-bottom: 56px;
+    }
+    .weekly-bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 120px;
+      padding: 20px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+    }
+    .week-bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .week-bar {
+      width: 100%;
+      max-width: 24px;
+      border-radius: 3px 3px 0 0;
+      background: var(--green-soft);
+      transition: height 0.5s ease;
+      min-height: 2px;
+    }
+    .week-bar.current {
+      background: var(--green-bright);
+      box-shadow: 0 0 8px rgba(74,222,74,0.3);
+    }
+    .week-bar.future {
+      background: var(--tile-future);
+    }
+    .week-label {
+      font-size: 0.5rem;
+      color: var(--text-muted);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      max-height: 40px;
+      overflow: hidden;
+    }
+
+    /* Total seconds counter */
+    .total-seconds {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .total-seconds-value {
+      font-size: clamp(1rem, 3vw, 1.6rem);
+      font-weight: 300;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.05em;
+    }
+    .total-seconds-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .footer p {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    /* Entrance animations */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeIn 0.8s ease forwards;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.35s; }
+    .delay-4 { animation-delay: 0.5s; }
+    .delay-5 { animation-delay: 0.65s; }
+    .delay-6 { animation-delay: 0.8s; }
+    .delay-7 { animation-delay: 0.95s; }
+    .delay-8 { animation-delay: 1.1s; }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header fade-in delay-1">
+      <div class="header-label">Time Elapsed Since</div>
+      <h1 class="header-title">That Moment</h1>
+      <p class="header-timestamp">
+        <span>14:40 UTC</span> &mdash; 9 March 2026
+        &nbsp;&middot;&nbsp; 20:25 NPT
+      </p>
+    </header>
+
+    <!-- Live Counter -->
+    <section class="counter-section fade-in delay-2">
+      <div class="counter-grid">
+        <div class="counter-unit">
+          <div class="counter-value" id="c-days">0</div>
+          <div class="counter-label">Days</div>
+        </div>
+        <div class="counter-unit">
+          <div class="counter-value" id="c-hours">0</div>
+          <div class="counter-label">Hours</div>
+        </div>
+        <div class="counter-unit">
+          <div class="counter-value" id="c-minutes">0</div>
+          <div class="counter-label">Minutes</div>
+        </div>
+        <div class="counter-unit">
+          <div class="counter-value" id="c-seconds">0</div>
+          <div class="counter-label">Seconds</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Total Seconds -->
+    <div class="total-seconds fade-in delay-3">
+      <div class="total-seconds-value" id="total-seconds">0</div>
+      <div class="total-seconds-label">Total Seconds</div>
+    </div>
+
+    <!-- Year Grid -->
+    <section class="grid-section fade-in delay-3">
+      <div class="section-header">
+        <div class="section-title">2026 &mdash; Day by Day</div>
+        <div class="section-subtitle" id="grid-subtitle">Day 0 of 365</div>
+      </div>
+      <div class="year-grid-wrapper">
+        <div class="year-grid" id="year-grid"></div>
+      </div>
+    </section>
+
+    <!-- Year Progress Ring + Stats -->
+    <section class="progress-section fade-in delay-4">
+      <div class="progress-card">
+        <div class="ring-container">
+          <svg class="progress-ring" width="120" height="120" viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="52" fill="none" stroke-width="8"/>
+            <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52" fill="none" stroke-width="8"
+              stroke-dasharray="326.73" stroke-dashoffset="326.73"/>
+          </svg>
+          <div class="ring-center-text">
+            <span class="ring-percent" id="ring-percent">0%</span>
+            <span class="ring-label">of year</span>
+          </div>
+        </div>
+        <div class="progress-stats">
+          <div class="stat-row">
+            <span class="stat-label">Days counting</span>
+            <span class="stat-value" id="stat-counting">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Days remaining in year</span>
+            <span class="stat-value" id="stat-remaining">365</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Total hours elapsed</span>
+            <span class="stat-value" id="stat-hours">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Total minutes elapsed</span>
+            <span class="stat-value" id="stat-minutes">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Weeks completed</span>
+            <span class="stat-value" id="stat-weeks">0</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- World Clocks -->
+    <section class="info-row fade-in delay-5">
+      <div class="info-card">
+        <div class="info-card-title">World Clocks</div>
+        <div class="clock-row">
+          <div>
+            <div class="clock-time" id="clock-gmt">--:--:--</div>
+            <div class="clock-label">Greenwich Mean Time (GMT)</div>
+          </div>
+        </div>
+        <div class="clock-row">
+          <div>
+            <div class="clock-time" id="clock-npt">--:--:--</div>
+            <div class="clock-label">Nepal Standard Time (NPT)</div>
+          </div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">This Moment in Numbers</div>
+        <div class="stat-row">
+          <span class="stat-label">Heartbeats (avg)</span>
+          <span class="stat-value" id="heartbeats">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Breaths taken (avg)</span>
+          <span class="stat-value" id="breaths">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Earth rotations</span>
+          <span class="stat-value" id="rotations">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Moon phases</span>
+          <span class="stat-value" id="moon-phases">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Milestones -->
+    <section class="milestones-section fade-in delay-6">
+      <div class="section-header">
+        <div class="section-title">Milestones</div>
+        <div class="section-subtitle">Marking the passage of time</div>
+      </div>
+      <div class="milestones-grid" id="milestones-grid"></div>
+    </section>
+
+    <!-- Weekly Breakdown -->
+    <section class="weekly-section fade-in delay-7">
+      <div class="section-header">
+        <div class="section-title">Weekly Breakdown</div>
+        <div class="section-subtitle" id="weeks-label">Weeks since the moment</div>
+      </div>
+      <div class="weekly-bar-chart" id="weekly-chart"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer fade-in delay-8">
+      <p>Time moves forward &mdash; always.</p>
+    </footer>
+  </div>
+
+  <script>
+    // THE MOMENT: March 9, 2026, 8:25 PM NPT (UTC+5:45) = 14:40 UTC
+    const THE_MOMENT = new Date(Date.UTC(2026, 2, 9, 14, 40, 0));
+    const YEAR_START = new Date(Date.UTC(2026, 0, 1));
+    const YEAR_END = new Date(Date.UTC(2027, 0, 1));
+    const DAYS_IN_YEAR = 365;
+
+    // Day of year for the moment (March 9 = day 68, 0-indexed = 67)
+    const MOMENT_DOY = dayOfYear(THE_MOMENT); // 1-indexed
+
+    function dayOfYear(date) {
+      const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      const diff = date - start;
+      return Math.floor(diff / 86400000) + 1;
+    }
+
+    function todayDOY() {
+      const now = new Date();
+      const utcNow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      if (utcNow.getUTCFullYear() !== 2026) {
+        // If we're not in 2026, handle gracefully
+        if (utcNow < YEAR_START) return 0;
+        if (utcNow >= YEAR_END) return 366;
+      }
+      return dayOfYear(utcNow);
+    }
+
+    // ---- COUNTER ----
+    function updateCounter() {
+      const now = new Date();
+      let diff = now - THE_MOMENT;
+      if (diff < 0) diff = 0;
+
+      const totalSeconds = Math.floor(diff / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      document.getElementById('c-days').textContent = days.toLocaleString();
+      document.getElementById('c-hours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('c-minutes').textContent = String(minutes).padStart(2, '0');
+      document.getElementById('c-seconds').textContent = String(seconds).padStart(2, '0');
+
+      document.getElementById('total-seconds').textContent = totalSeconds.toLocaleString();
+
+      // Stats
+      const totalHours = Math.floor(diff / 3600000);
+      const totalMinutes = Math.floor(diff / 60000);
+      document.getElementById('stat-counting').textContent = days.toLocaleString();
+      document.getElementById('stat-hours').textContent = totalHours.toLocaleString();
+      document.getElementById('stat-minutes').textContent = totalMinutes.toLocaleString();
+      document.getElementById('stat-weeks').textContent = Math.floor(days / 7).toLocaleString();
+
+      const doy = todayDOY();
+      document.getElementById('stat-remaining').textContent = Math.max(0, DAYS_IN_YEAR - doy);
+
+      // Fun numbers
+      document.getElementById('heartbeats').textContent = Math.floor(totalSeconds * 1.17).toLocaleString(); // ~70bpm
+      document.getElementById('breaths').textContent = Math.floor(totalMinutes * 15).toLocaleString();
+      document.getElementById('rotations').textContent = (days + hours/24).toFixed(4);
+      document.getElementById('moon-phases').textContent = ((diff / 1000 / 86400) / 29.53).toFixed(3);
+    }
+
+    // ---- CLOCKS ----
+    function updateClocks() {
+      const now = new Date();
+
+      // GMT
+      const gmtH = String(now.getUTCHours()).padStart(2, '0');
+      const gmtM = String(now.getUTCMinutes()).padStart(2, '0');
+      const gmtS = String(now.getUTCSeconds()).padStart(2, '0');
+      document.getElementById('clock-gmt').textContent = `${gmtH}:${gmtM}:${gmtS}`;
+
+      // NPT = UTC + 5:45
+      const nptOffset = 5 * 60 + 45; // minutes
+      const nptTime = new Date(now.getTime() + nptOffset * 60000);
+      const nptH = String(nptTime.getUTCHours()).padStart(2, '0');
+      const nptM = String(nptTime.getUTCMinutes()).padStart(2, '0');
+      const nptS = String(nptTime.getUTCSeconds()).padStart(2, '0');
+      document.getElementById('clock-npt').textContent = `${nptH}:${nptM}:${nptS}`;
+    }
+
+    // ---- YEAR GRID ----
+    function buildYearGrid() {
+      const grid = document.getElementById('year-grid');
+      grid.innerHTML = '';
+      const today = todayDOY();
+
+      // Find what day of week Jan 1, 2026 is (0=Sun..6=Sat)
+      // Jan 1, 2026 is a Thursday (4)
+      const jan1 = new Date(Date.UTC(2026, 0, 1));
+      const startDow = jan1.getUTCDay(); // 0=Sun
+
+      // Add empty tiles for offset
+      for (let i = 0; i < startDow; i++) {
+        const tile = document.createElement('div');
+        tile.className = 'day-tile empty';
+        grid.appendChild(tile);
+      }
+
+      for (let d = 1; d <= DAYS_IN_YEAR; d++) {
+        const tile = document.createElement('div');
+        const date = new Date(Date.UTC(2026, 0, 1));
+        date.setUTCDate(d);
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const label = `${monthNames[date.getUTCMonth()]} ${date.getUTCDate()}, 2026`;
+
+        if (d >= MOMENT_DOY && d <= today) {
+          // Counter days (from the moment to today)
+          if (d === today) {
+            tile.className = 'day-tile counter-day today';
+            tile.setAttribute('data-tooltip', `${label} — Today (Day ${d - MOMENT_DOY + 1})`);
+          } else if (d >= today - 7) {
+            tile.className = 'day-tile counter-day recent';
+            tile.setAttribute('data-tooltip', `${label} — Day ${d - MOMENT_DOY + 1}`);
+          } else {
+            tile.className = 'day-tile counter-day';
+            tile.setAttribute('data-tooltip', `${label} — Day ${d - MOMENT_DOY + 1}`);
+          }
+        } else if (d < MOMENT_DOY) {
+          // Past (before the moment)
+          tile.className = 'day-tile past';
+          tile.setAttribute('data-tooltip', label);
+        } else {
+          // Future
+          tile.className = 'day-tile future';
+          tile.setAttribute('data-tooltip', label);
+        }
+
+        grid.appendChild(tile);
+      }
+
+      // Grid subtitle
+      const counterDays = Math.max(0, today - MOMENT_DOY + 1);
+      document.getElementById('grid-subtitle').textContent = `Day ${today} of ${DAYS_IN_YEAR} — ${counterDays} green`;
+    }
+
+    // ---- YEAR PROGRESS RING ----
+    function updateProgressRing() {
+      const doy = todayDOY();
+      const pct = Math.min(1, doy / DAYS_IN_YEAR);
+      const circumference = 2 * Math.PI * 52; // ~326.73
+      const offset = circumference * (1 - pct);
+      document.getElementById('ring-fill').style.strokeDashoffset = offset;
+      document.getElementById('ring-percent').textContent = (pct * 100).toFixed(1) + '%';
+    }
+
+    // ---- MILESTONES ----
+    function buildMilestones() {
+      const milestones = [
+        { name: '1 Hour', days: 0, hours: 1, icon: '~' },
+        { name: '24 Hours', days: 1, hours: 0, icon: '|' },
+        { name: '1 Week', days: 7, hours: 0, icon: '/' },
+        { name: '2 Weeks', days: 14, hours: 0, icon: '//' },
+        { name: '1 Month', days: 30, hours: 0, icon: '#' },
+        { name: '50 Days', days: 50, hours: 0, icon: '##' },
+        { name: '100 Days', days: 100, hours: 0, icon: '%' },
+        { name: '6 Months', days: 182, hours: 0, icon: '%%' },
+        { name: '1 Year', days: 365, hours: 0, icon: '&' },
+      ];
+
+      const grid = document.getElementById('milestones-grid');
+      grid.innerHTML = '';
+      const now = new Date();
+      const diffMs = now - THE_MOMENT;
+      const diffDays = diffMs / 86400000;
+
+      let foundNext = false;
+
+      milestones.forEach(m => {
+        const targetDays = m.days + (m.hours / 24);
+        const targetDate = new Date(THE_MOMENT.getTime() + targetDays * 86400000);
+        const reached = diffDays >= targetDays;
+        const isNext = !reached && !foundNext;
+        if (isNext) foundNext = true;
+
+        const card = document.createElement('div');
+        card.className = `milestone-card${reached ? ' reached' : ''}${isNext ? ' next' : ''}`;
+
+        const dateStr = targetDate.toLocaleDateString('en-US', {
+          month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'
+        });
+
+        let statusHtml = '';
+        if (reached) {
+          statusHtml = '<div class="milestone-status done">Reached</div>';
+        } else {
+          const daysUntil = Math.ceil(targetDays - diffDays);
+          statusHtml = `<div class="milestone-status upcoming">${daysUntil} day${daysUntil !== 1 ? 's' : ''} away</div>`;
+        }
+
+        card.innerHTML = `
+          <span class="milestone-icon">${m.icon}</span>
+          <div class="milestone-name">${m.name}</div>
+          <div class="milestone-date">${dateStr}</div>
+          ${statusHtml}
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // ---- WEEKLY CHART ----
+    function buildWeeklyChart() {
+      const chart = document.getElementById('weekly-chart');
+      chart.innerHTML = '';
+      const now = new Date();
+      const diffDays = Math.max(0, Math.floor((now - THE_MOMENT) / 86400000));
+      const totalWeeks = Math.min(52, Math.ceil(diffDays / 7) + 4); // show a few future weeks
+      const displayWeeks = Math.max(totalWeeks, 12); // at least 12 bars
+
+      const currentWeek = Math.floor(diffDays / 7);
+
+      for (let w = 0; w < displayWeeks; w++) {
+        const col = document.createElement('div');
+        col.className = 'week-bar-col';
+
+        const bar = document.createElement('div');
+        const daysInThisWeek = w < currentWeek ? 7 : (w === currentWeek ? (diffDays % 7) || 1 : 0);
+        const heightPct = (daysInThisWeek / 7) * 100;
+
+        if (w < currentWeek) {
+          bar.className = 'week-bar';
+        } else if (w === currentWeek) {
+          bar.className = 'week-bar current';
+        } else {
+          bar.className = 'week-bar future';
+        }
+        bar.style.height = `${Math.max(heightPct, w <= currentWeek ? 15 : 5)}%`;
+
+        const label = document.createElement('div');
+        label.className = 'week-label';
+        label.textContent = `W${w + 1}`;
+
+        col.appendChild(bar);
+        col.appendChild(label);
+        chart.appendChild(col);
+      }
+
+      document.getElementById('weeks-label').textContent =
+        `${Math.floor(diffDays / 7)} full weeks completed`;
+    }
+
+    // ---- INIT ----
+    function init() {
+      buildYearGrid();
+      buildMilestones();
+      buildWeeklyChart();
+      updateProgressRing();
+      updateCounter();
+      updateClocks();
+
+      setInterval(() => {
+        updateCounter();
+        updateClocks();
+      }, 1000);
+
+      // Rebuild grid and milestones every 5 minutes (for day change)
+      setInterval(() => {
+        buildYearGrid();
+        buildMilestones();
+        buildWeeklyChart();
+        updateProgressRing();
+      }, 300000);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
