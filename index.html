@@ -6,79 +6,102 @@
   <title>Since That Moment</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="preload"
+    href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap"
+    as="style">
+  <link
+    href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg-deep: #0a0a0f;
-      --bg-card: #111118;
-      --bg-card-hover: #16161f;
-      --border-subtle: rgba(255,255,255,0.06);
-      --text-primary: #e8e6e1;
-      --text-secondary: rgba(232,230,225,0.5);
-      --text-muted: rgba(232,230,225,0.25);
-      --green-dim: #1a3a1a;
-      --green-soft: #2d6a2d;
-      --green-mid: #3da33d;
-      --green-bright: #4ade4a;
-      --tile-past: rgba(255,255,255,0.12);
-      --tile-future: rgba(255,255,255,0.035);
-      --accent-warm: #c9a96e;
-      --accent-warm-dim: rgba(201,169,110,0.15);
+      --paper: #faf8f4;
+      --ink: #1a1a1a;
+      --ink-light: #4a4a4a;
+      --ink-muted: #8a8a8a;
+      --accent: #16a34a;
+      --accent-dim: rgba(22, 163, 74, 0.1);
+      --accent-border: rgba(22, 163, 74, 0.2);
+      --border: rgba(0,0,0,0.08);
+      --border-light: rgba(0,0,0,0.04);
+      --font-serif: 'EB Garamond', Georgia, serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      --tile-past: rgba(0,0,0,0.1);
+      --tile-future: rgba(0,0,0,0.03);
     }
 
     html {
-      font-size: 16px;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
     }
 
+    html:not(.fonts-loaded) body { opacity: 0; }
+    html.fonts-loaded body { opacity: 1; transition: opacity 0.15s ease-in; }
+
     body {
-      background: var(--bg-deep);
-      color: var(--text-primary);
-      font-family: 'IBM Plex Mono', monospace;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 19px;
+      line-height: 1.7;
       min-height: 100vh;
       overflow-x: hidden;
     }
 
-    /* Subtle noise texture overlay */
-    body::before {
+    /* Noise texture */
+    body::after {
       content: '';
       position: fixed;
       inset: 0;
-      opacity: 0.03;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      pointer-events: none;
       z-index: 9999;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
-    /* Ambient glow */
-    .ambient-glow {
+    ::selection {
+      color: #000;
+      background: rgba(22, 163, 74, 0.2);
+    }
+
+    /* Cellular automata background */
+    .cell-bg {
       position: fixed;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      filter: blur(150px);
-      opacity: 0.07;
-      pointer-events: none;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
     }
-    .glow-1 {
-      top: -200px;
-      right: -100px;
-      background: var(--green-bright);
+    .cell-grid {
+      display: grid;
+      gap: 1px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
     }
-    .glow-2 {
-      bottom: -300px;
-      left: -200px;
-      background: var(--accent-warm);
+    .cell {
+      border-radius: 1px;
+    }
+    .cell.alive {
+      background: rgba(22, 163, 74, var(--cell-opacity, 0.5));
+      animation: cell-pulse var(--cell-duration, 3s) ease-in-out var(--cell-delay, 0s) infinite;
+    }
+    @keyframes cell-pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
     }
 
     .container {
-      max-width: 900px;
+      max-width: 720px;
       margin: 0 auto;
-      padding: 60px 24px 80px;
+      padding: 80px 24px 100px;
       position: relative;
       z-index: 1;
     }
@@ -86,150 +109,157 @@
     /* Header */
     .header {
       text-align: center;
-      margin-bottom: 56px;
+      margin-bottom: 64px;
     }
     .header-label {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.85rem;
-      letter-spacing: 0.35em;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--text-secondary);
+      color: var(--ink-muted);
       margin-bottom: 16px;
     }
     .header-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 300;
+      font-family: var(--font-serif);
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 400;
       font-style: italic;
-      color: var(--text-primary);
-      line-height: 1.2;
-      margin-bottom: 12px;
+      color: var(--ink);
+      line-height: 1.1;
+      margin-bottom: 16px;
+      letter-spacing: -0.025em;
+    }
+    .header-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--border);
+      margin: 20px auto;
     }
     .header-timestamp {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--ink-muted);
+      letter-spacing: 0.05em;
     }
-    .header-timestamp span {
-      color: var(--accent-warm);
-      opacity: 0.7;
+    .header-timestamp .accent {
+      color: var(--accent);
     }
 
     /* Counter */
     .counter-section {
-      margin-bottom: 56px;
+      margin-bottom: 64px;
+      text-align: center;
     }
     .counter-grid {
       display: flex;
       justify-content: center;
-      gap: 4px;
+      gap: 0;
       flex-wrap: wrap;
     }
     .counter-unit {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 28px 20px 22px;
-      min-width: 140px;
+      padding: 0 20px;
       text-align: center;
-      flex: 1;
-      max-width: 200px;
       position: relative;
-      overflow: hidden;
-      transition: border-color 0.3s ease;
     }
-    .counter-unit:hover {
-      border-color: rgba(255,255,255,0.1);
-    }
-    .counter-unit::before {
-      content: '';
+    .counter-unit + .counter-unit::before {
+      content: ':';
       position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 40%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent-warm), transparent);
-      opacity: 0.4;
+      left: -2px;
+      top: 8px;
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 400;
+      color: var(--ink-muted);
+      opacity: 0.3;
+    }
+    .counter-unit:first-child {
+      padding-left: 0;
+    }
+    .counter-unit:first-child + .counter-unit::before {
+      content: none;
     }
     .counter-value {
-      font-size: clamp(2rem, 5vw, 3rem);
-      font-weight: 600;
+      font-family: var(--font-mono);
+      font-size: clamp(2.5rem, 6vw, 3.5rem);
+      font-weight: 500;
       line-height: 1;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-variant-numeric: tabular-nums;
-      background: linear-gradient(180deg, var(--text-primary) 30%, rgba(232,230,225,0.6));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--ink);
+    }
+    .counter-value.days-val {
+      color: var(--accent);
     }
     .counter-label {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.8rem;
-      letter-spacing: 0.2em;
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--text-secondary);
+      color: var(--ink-muted);
+    }
+    .counter-sub {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--ink-muted);
+      margin-top: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+    .counter-sub span {
+      color: var(--ink-light);
+      font-weight: 500;
+    }
+
+    /* Section headers */
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .section-subtitle {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--ink-muted);
+      letter-spacing: 0.05em;
     }
 
     /* Year Grid */
     .grid-section {
       margin-bottom: 56px;
     }
-    .section-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-    .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.3rem;
-      font-weight: 400;
-      color: var(--text-primary);
-    }
-    .section-subtitle {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-    }
-
     .year-grid-wrapper {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: 24px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: rgba(255,255,255,0.5);
       overflow-x: auto;
-    }
-    .month-labels {
-      display: flex;
-      margin-bottom: 6px;
-      padding-left: 0;
-    }
-    .month-label {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
     }
     .year-grid {
       display: grid;
       grid-template-columns: repeat(53, 1fr);
       grid-template-rows: repeat(7, 1fr);
-      gap: 3px;
+      gap: 2px;
       grid-auto-flow: column;
     }
     .day-tile {
       width: 100%;
       aspect-ratio: 1;
-      border-radius: 2.5px;
+      border-radius: 1px;
       position: relative;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
-      min-width: 10px;
+      min-width: 9px;
     }
     .day-tile:hover {
-      transform: scale(1.8);
+      transform: scale(2);
       z-index: 10;
     }
     .day-tile.past {
@@ -239,158 +269,52 @@
       background: var(--tile-future);
     }
     .day-tile.counter-day {
-      background: var(--green-soft);
-      box-shadow: 0 0 4px rgba(74,222,74,0.15);
+      background: rgba(22, 163, 74, 0.45);
     }
     .day-tile.counter-day.recent {
-      background: var(--green-mid);
-      box-shadow: 0 0 6px rgba(74,222,74,0.2);
+      background: rgba(22, 163, 74, 0.65);
     }
     .day-tile.today {
-      background: var(--green-bright) !important;
-      box-shadow: 0 0 12px rgba(74,222,74,0.4);
-      animation: pulse-today 2s ease-in-out infinite;
+      background: var(--accent) !important;
+      box-shadow: 0 0 8px rgba(22, 163, 74, 0.4);
+      animation: pulse-today 2.5s ease-in-out infinite;
     }
     @keyframes pulse-today {
-      0%, 100% { box-shadow: 0 0 8px rgba(74,222,74,0.3); }
-      50% { box-shadow: 0 0 20px rgba(74,222,74,0.6); }
+      0%, 100% { box-shadow: 0 0 4px rgba(22, 163, 74, 0.3); }
+      50% { box-shadow: 0 0 14px rgba(22, 163, 74, 0.5); }
     }
     .day-tile.empty {
       background: transparent;
     }
-
-    /* Tooltip */
     .day-tile[data-tooltip]:hover::after {
       content: attr(data-tooltip);
       position: absolute;
-      bottom: calc(100% + 8px);
+      bottom: calc(100% + 6px);
       left: 50%;
       transform: translateX(-50%);
-      background: #1a1a24;
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text-primary);
-      font-size: 0.6rem;
-      padding: 4px 8px;
-      border-radius: 4px;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      padding: 3px 7px;
+      border-radius: 2px;
       white-space: nowrap;
       z-index: 100;
       pointer-events: none;
     }
 
-    /* Milestones */
-    .milestones-section {
-      margin-bottom: 56px;
-    }
-    .milestones-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px;
-    }
-    .milestone-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 18px;
-      transition: border-color 0.3s ease, background 0.3s ease;
-    }
-    .milestone-card:hover {
-      background: var(--bg-card-hover);
-      border-color: rgba(255,255,255,0.1);
-    }
-    .milestone-card.reached {
-      border-color: rgba(74,222,74,0.2);
-      background: rgba(74,222,74,0.03);
-    }
-    .milestone-card.reached .milestone-icon {
-      color: var(--green-bright);
-    }
-    .milestone-card.next {
-      border-color: var(--accent-warm-dim);
-    }
-    .milestone-icon {
-      font-size: 1.2rem;
-      margin-bottom: 8px;
-      display: block;
-      color: var(--text-muted);
-    }
-    .milestone-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.95rem;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-    .milestone-date {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-    }
-    .milestone-status {
-      font-size: 0.6rem;
-      margin-top: 6px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .milestone-status.done {
-      color: var(--green-mid);
-    }
-    .milestone-status.upcoming {
-      color: var(--accent-warm);
-      opacity: 0.7;
-    }
-
-    /* Clocks & Stats row */
-    .info-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 56px;
-    }
-    @media (max-width: 600px) {
-      .info-row { grid-template-columns: 1fr; }
-    }
-    .info-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 22px;
-    }
-    .info-card-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.75rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-      margin-bottom: 14px;
-    }
-    .clock-time {
-      font-size: 1.5rem;
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-      margin-bottom: 2px;
-    }
-    .clock-label {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-    }
-    .clock-row {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-    .clock-row:last-child { margin-bottom: 0; }
-
-    /* Year progress ring */
+    /* Progress + Stats */
     .progress-section {
       margin-bottom: 56px;
     }
     .progress-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 24px;
       display: flex;
       align-items: center;
-      gap: 32px;
+      gap: 28px;
+      background: rgba(255,255,255,0.5);
     }
     @media (max-width: 500px) {
       .progress-card { flex-direction: column; gap: 20px; }
@@ -403,10 +327,10 @@
       transform: rotate(-90deg);
     }
     .ring-bg {
-      stroke: rgba(255,255,255,0.05);
+      stroke: rgba(0,0,0,0.06);
     }
     .ring-fill {
-      stroke: var(--green-mid);
+      stroke: var(--accent);
       stroke-linecap: round;
       transition: stroke-dashoffset 1s ease;
     }
@@ -419,15 +343,17 @@
       justify-content: center;
     }
     .ring-percent {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--ink);
     }
     .ring-label {
-      font-size: 0.55rem;
-      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.5rem;
+      color: var(--ink-muted);
       text-transform: uppercase;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.1em;
     }
     .progress-stats {
       flex: 1;
@@ -435,158 +361,234 @@
     .stat-row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border-subtle);
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border-light);
       font-size: 0.75rem;
     }
     .stat-row:last-child { border-bottom: none; }
-    .stat-label { color: var(--text-secondary); }
-    .stat-value { color: var(--text-primary); font-weight: 500; }
+    .stat-label {
+      font-family: var(--font-serif);
+      color: var(--ink-light);
+    }
+    .stat-value {
+      font-family: var(--font-mono);
+      color: var(--ink);
+      font-weight: 500;
+      font-size: 0.7rem;
+    }
 
-    /* Weekly breakdown */
+    /* Info row */
+    .info-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 56px;
+    }
+    @media (max-width: 600px) {
+      .info-row { grid-template-columns: 1fr; }
+    }
+    .info-card {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px;
+      background: rgba(255,255,255,0.5);
+    }
+    .info-card-title {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 14px;
+    }
+    .clock-time {
+      font-family: var(--font-mono);
+      font-size: 1.3rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+    .clock-label {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      color: var(--ink-muted);
+    }
+    .clock-row {
+      margin-bottom: 12px;
+    }
+    .clock-row:last-child { margin-bottom: 0; }
+
+    /* Milestones */
+    .milestones-section {
+      margin-bottom: 56px;
+    }
+    .milestones-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 600px) {
+      .milestones-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .milestone-card {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px;
+      transition: border-color 0.2s ease;
+      background: rgba(255,255,255,0.5);
+    }
+    .milestone-card:hover {
+      border-color: rgba(0,0,0,0.15);
+    }
+    .milestone-card.reached {
+      border-color: var(--accent-border);
+      background: var(--accent-dim);
+    }
+    .milestone-card.next {
+      border-left: 2px solid var(--accent);
+    }
+    .milestone-name {
+      font-family: var(--font-serif);
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+    .milestone-date {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      color: var(--ink-muted);
+    }
+    .milestone-status {
+      font-family: var(--font-mono);
+      font-size: 0.5rem;
+      margin-top: 5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .milestone-status.done {
+      color: var(--accent);
+    }
+    .milestone-status.upcoming {
+      color: var(--ink-muted);
+    }
+
+    /* Weekly Chart */
     .weekly-section {
       margin-bottom: 56px;
     }
     .weekly-bar-chart {
       display: flex;
       align-items: flex-end;
-      gap: 6px;
-      height: 120px;
-      padding: 20px 24px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
+      gap: 4px;
+      height: 100px;
+      padding: 16px 20px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: rgba(255,255,255,0.5);
     }
     .week-bar-col {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       height: 100%;
       justify-content: flex-end;
     }
     .week-bar {
       width: 100%;
-      max-width: 24px;
-      border-radius: 3px 3px 0 0;
-      background: var(--green-soft);
+      max-width: 20px;
+      border-radius: 2px 2px 0 0;
+      background: rgba(22, 163, 74, 0.35);
       transition: height 0.5s ease;
       min-height: 2px;
     }
     .week-bar.current {
-      background: var(--green-bright);
-      box-shadow: 0 0 8px rgba(74,222,74,0.3);
+      background: var(--accent);
     }
     .week-bar.future {
       background: var(--tile-future);
     }
     .week-label {
-      font-size: 0.5rem;
-      color: var(--text-muted);
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
-      max-height: 40px;
-      overflow: hidden;
-    }
-
-    /* Total seconds counter */
-    .total-seconds {
-      text-align: center;
-      margin-bottom: 56px;
-    }
-    .total-seconds-value {
-      font-size: clamp(1rem, 3vw, 1.6rem);
-      font-weight: 300;
-      color: var(--text-secondary);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.05em;
-    }
-    .total-seconds-label {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-top: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.4rem;
+      color: var(--ink-muted);
+      opacity: 0.5;
     }
 
     /* Footer */
     .footer {
       text-align: center;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-subtle);
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
     }
     .footer p {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      letter-spacing: 0.08em;
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--ink-muted);
     }
 
     /* Entrance animations */
     .fade-in {
       opacity: 0;
-      transform: translateY(16px);
-      animation: fadeIn 0.8s ease forwards;
+      transform: translateY(12px);
+      animation: fadeIn 0.6s ease forwards;
     }
     @keyframes fadeIn {
       to { opacity: 1; transform: translateY(0); }
     }
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
-    .delay-3 { animation-delay: 0.35s; }
-    .delay-4 { animation-delay: 0.5s; }
-    .delay-5 { animation-delay: 0.65s; }
-    .delay-6 { animation-delay: 0.8s; }
-    .delay-7 { animation-delay: 0.95s; }
-    .delay-8 { animation-delay: 1.1s; }
+    .d1 { animation-delay: 0.05s; }
+    .d2 { animation-delay: 0.15s; }
+    .d3 { animation-delay: 0.25s; }
+    .d4 { animation-delay: 0.35s; }
+    .d5 { animation-delay: 0.45s; }
+    .d6 { animation-delay: 0.55s; }
+    .d7 { animation-delay: 0.65s; }
+    .d8 { animation-delay: 0.75s; }
   </style>
 </head>
 <body>
-  <div class="ambient-glow glow-1"></div>
-  <div class="ambient-glow glow-2"></div>
+  <!-- Cellular automata background -->
+  <div class="cell-bg" id="cell-bg"></div>
 
   <div class="container">
-    <!-- Header -->
-    <header class="header fade-in delay-1">
-      <div class="header-label">Time Elapsed Since</div>
+    <header class="header fade-in d1">
+      <div class="header-label">Time elapsed since</div>
       <h1 class="header-title">That Moment</h1>
+      <div class="header-divider"></div>
       <p class="header-timestamp">
-        <span>14:40 UTC</span> &mdash; 9 March 2026
-        &nbsp;&middot;&nbsp; 20:25 NPT
+        <span class="accent">14:40 UTC</span> &mdash; 9 March 2026 &middot; 20:25 NPT
       </p>
     </header>
 
-    <!-- Live Counter -->
-    <section class="counter-section fade-in delay-2">
+    <section class="counter-section fade-in d2">
       <div class="counter-grid">
         <div class="counter-unit">
-          <div class="counter-value" id="c-days">0</div>
+          <div class="counter-value days-val" id="c-days">0</div>
           <div class="counter-label">Days</div>
         </div>
         <div class="counter-unit">
-          <div class="counter-value" id="c-hours">0</div>
+          <div class="counter-value" id="c-hours">00</div>
           <div class="counter-label">Hours</div>
         </div>
         <div class="counter-unit">
-          <div class="counter-value" id="c-minutes">0</div>
+          <div class="counter-value" id="c-minutes">00</div>
           <div class="counter-label">Minutes</div>
         </div>
         <div class="counter-unit">
-          <div class="counter-value" id="c-seconds">0</div>
+          <div class="counter-value" id="c-seconds">00</div>
           <div class="counter-label">Seconds</div>
         </div>
       </div>
+      <div class="counter-sub">
+        <span id="total-seconds">0</span> total seconds
+      </div>
     </section>
 
-    <!-- Total Seconds -->
-    <div class="total-seconds fade-in delay-3">
-      <div class="total-seconds-value" id="total-seconds">0</div>
-      <div class="total-seconds-label">Total Seconds</div>
-    </div>
-
-    <!-- Year Grid -->
-    <section class="grid-section fade-in delay-3">
+    <section class="grid-section fade-in d3">
       <div class="section-header">
         <div class="section-title">2026 &mdash; Day by Day</div>
         <div class="section-subtitle" id="grid-subtitle">Day 0 of 365</div>
@@ -596,18 +598,21 @@
       </div>
     </section>
 
-    <!-- Year Progress Ring + Stats -->
-    <section class="progress-section fade-in delay-4">
+    <section class="progress-section fade-in d4">
+      <div class="section-header">
+        <div class="section-title">Year Progress</div>
+        <div class="section-subtitle" id="ring-pct-label">0%</div>
+      </div>
       <div class="progress-card">
         <div class="ring-container">
-          <svg class="progress-ring" width="120" height="120" viewBox="0 0 120 120">
-            <circle class="ring-bg" cx="60" cy="60" r="52" fill="none" stroke-width="8"/>
-            <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52" fill="none" stroke-width="8"
-              stroke-dasharray="326.73" stroke-dashoffset="326.73"/>
+          <svg class="progress-ring" width="110" height="110" viewBox="0 0 110 110">
+            <circle class="ring-bg" cx="55" cy="55" r="48" fill="none" stroke-width="6"/>
+            <circle class="ring-fill" id="ring-fill" cx="55" cy="55" r="48" fill="none" stroke-width="6"
+              stroke-dasharray="301.59" stroke-dashoffset="301.59"/>
           </svg>
           <div class="ring-center-text">
             <span class="ring-percent" id="ring-percent">0%</span>
-            <span class="ring-label">of year</span>
+            <span class="ring-label">of 2026</span>
           </div>
         </div>
         <div class="progress-stats">
@@ -616,15 +621,15 @@
             <span class="stat-value" id="stat-counting">0</span>
           </div>
           <div class="stat-row">
-            <span class="stat-label">Days remaining in year</span>
+            <span class="stat-label">Days remaining</span>
             <span class="stat-value" id="stat-remaining">365</span>
           </div>
           <div class="stat-row">
-            <span class="stat-label">Total hours elapsed</span>
+            <span class="stat-label">Hours elapsed</span>
             <span class="stat-value" id="stat-hours">0</span>
           </div>
           <div class="stat-row">
-            <span class="stat-label">Total minutes elapsed</span>
+            <span class="stat-label">Minutes elapsed</span>
             <span class="stat-value" id="stat-minutes">0</span>
           </div>
           <div class="stat-row">
@@ -635,31 +640,26 @@
       </div>
     </section>
 
-    <!-- World Clocks -->
-    <section class="info-row fade-in delay-5">
+    <section class="info-row fade-in d5">
       <div class="info-card">
         <div class="info-card-title">World Clocks</div>
         <div class="clock-row">
-          <div>
-            <div class="clock-time" id="clock-gmt">--:--:--</div>
-            <div class="clock-label">Greenwich Mean Time (GMT)</div>
-          </div>
+          <div class="clock-time" id="clock-gmt">--:--:--</div>
+          <div class="clock-label">Greenwich Mean Time</div>
         </div>
         <div class="clock-row">
-          <div>
-            <div class="clock-time" id="clock-npt">--:--:--</div>
-            <div class="clock-label">Nepal Standard Time (NPT)</div>
-          </div>
+          <div class="clock-time" id="clock-npt">--:--:--</div>
+          <div class="clock-label">Nepal Standard Time</div>
         </div>
       </div>
       <div class="info-card">
-        <div class="info-card-title">This Moment in Numbers</div>
+        <div class="info-card-title">In Numbers</div>
         <div class="stat-row">
-          <span class="stat-label">Heartbeats (avg)</span>
+          <span class="stat-label">Heartbeats</span>
           <span class="stat-value" id="heartbeats">0</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Breaths taken (avg)</span>
+          <span class="stat-label">Breaths</span>
           <span class="stat-value" id="breaths">0</span>
         </div>
         <div class="stat-row">
@@ -673,8 +673,7 @@
       </div>
     </section>
 
-    <!-- Milestones -->
-    <section class="milestones-section fade-in delay-6">
+    <section class="milestones-section fade-in d6">
       <div class="section-header">
         <div class="section-title">Milestones</div>
         <div class="section-subtitle">Marking the passage of time</div>
@@ -682,46 +681,123 @@
       <div class="milestones-grid" id="milestones-grid"></div>
     </section>
 
-    <!-- Weekly Breakdown -->
-    <section class="weekly-section fade-in delay-7">
+    <section class="weekly-section fade-in d7">
       <div class="section-header">
         <div class="section-title">Weekly Breakdown</div>
-        <div class="section-subtitle" id="weeks-label">Weeks since the moment</div>
+        <div class="section-subtitle" id="weeks-label">0 weeks completed</div>
       </div>
       <div class="weekly-bar-chart" id="weekly-chart"></div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer fade-in delay-8">
+    <footer class="footer fade-in d8">
       <p>Time moves forward &mdash; always.</p>
     </footer>
   </div>
 
   <script>
+    // Font loading
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => document.documentElement.classList.add('fonts-loaded'));
+    } else {
+      document.documentElement.classList.add('fonts-loaded');
+    }
+    setTimeout(() => document.documentElement.classList.add('fonts-loaded'), 500);
+
     // THE MOMENT: March 9, 2026, 8:25 PM NPT (UTC+5:45) = 14:40 UTC
     const THE_MOMENT = new Date(Date.UTC(2026, 2, 9, 14, 40, 0));
     const YEAR_START = new Date(Date.UTC(2026, 0, 1));
     const YEAR_END = new Date(Date.UTC(2027, 0, 1));
     const DAYS_IN_YEAR = 365;
-
-    // Day of year for the moment (March 9 = day 68, 0-indexed = 67)
-    const MOMENT_DOY = dayOfYear(THE_MOMENT); // 1-indexed
+    const MOMENT_DOY = dayOfYear(THE_MOMENT);
 
     function dayOfYear(date) {
       const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-      const diff = date - start;
-      return Math.floor(diff / 86400000) + 1;
+      return Math.floor((date - start) / 86400000) + 1;
     }
 
     function todayDOY() {
       const now = new Date();
       const utcNow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
       if (utcNow.getUTCFullYear() !== 2026) {
-        // If we're not in 2026, handle gracefully
         if (utcNow < YEAR_START) return 0;
         if (utcNow >= YEAR_END) return 366;
       }
       return dayOfYear(utcNow);
+    }
+
+    // ---- CELLULAR AUTOMATA BACKGROUND ----
+    function buildCellBg() {
+      const bg = document.getElementById('cell-bg');
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const cellSize = 8;
+      const gap = 1;
+      const cols = Math.floor(w / (cellSize + gap));
+      const rows = Math.floor(h / (cellSize + gap));
+
+      const grid = document.createElement('div');
+      grid.className = 'cell-grid';
+      grid.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
+      grid.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
+      grid.style.width = `${cols * (cellSize + gap)}px`;
+      grid.style.height = `${rows * (cellSize + gap)}px`;
+
+      // Generate a Game of Life pattern
+      const cells = [];
+      for (let r = 0; r < rows; r++) {
+        cells[r] = [];
+        for (let c = 0; c < cols; c++) {
+          cells[r][c] = Math.random() < 0.08 ? 1 : 0;
+        }
+      }
+
+      // Run a few generations to make it look more organic
+      for (let gen = 0; gen < 3; gen++) {
+        const next = cells.map(row => [...row]);
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            let neighbors = 0;
+            for (let dr = -1; dr <= 1; dr++) {
+              for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                  neighbors += cells[nr][nc];
+                }
+              }
+            }
+            if (cells[r][c] === 1) {
+              next[r][c] = (neighbors === 2 || neighbors === 3) ? 1 : 0;
+            } else {
+              next[r][c] = neighbors === 3 ? 1 : 0;
+            }
+          }
+        }
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            cells[r][c] = next[r][c];
+          }
+        }
+      }
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const el = document.createElement('div');
+          el.className = 'cell' + (cells[r][c] ? ' alive' : '');
+          if (cells[r][c]) {
+            const opacity = (0.3 + Math.random() * 0.5).toFixed(2);
+            const dur = (2 + Math.random() * 3).toFixed(1);
+            const delay = (Math.random() * 4).toFixed(1);
+            el.style.cssText = `width:${cellSize}px;height:${cellSize}px;--cell-opacity:${opacity};--cell-duration:${dur}s;--cell-delay:${delay}s`;
+          } else {
+            el.style.cssText = `width:${cellSize}px;height:${cellSize}px`;
+          }
+          grid.appendChild(el);
+        }
+      }
+
+      bg.innerHTML = '';
+      bg.appendChild(grid);
     }
 
     // ---- COUNTER ----
@@ -740,10 +816,8 @@
       document.getElementById('c-hours').textContent = String(hours).padStart(2, '0');
       document.getElementById('c-minutes').textContent = String(minutes).padStart(2, '0');
       document.getElementById('c-seconds').textContent = String(seconds).padStart(2, '0');
-
       document.getElementById('total-seconds').textContent = totalSeconds.toLocaleString();
 
-      // Stats
       const totalHours = Math.floor(diff / 3600000);
       const totalMinutes = Math.floor(diff / 60000);
       document.getElementById('stat-counting').textContent = days.toLocaleString();
@@ -754,25 +828,21 @@
       const doy = todayDOY();
       document.getElementById('stat-remaining').textContent = Math.max(0, DAYS_IN_YEAR - doy);
 
-      // Fun numbers
-      document.getElementById('heartbeats').textContent = Math.floor(totalSeconds * 1.17).toLocaleString(); // ~70bpm
+      document.getElementById('heartbeats').textContent = Math.floor(totalSeconds * 1.17).toLocaleString();
       document.getElementById('breaths').textContent = Math.floor(totalMinutes * 15).toLocaleString();
-      document.getElementById('rotations').textContent = (days + hours/24).toFixed(4);
+      document.getElementById('rotations').textContent = (days + hours / 24).toFixed(4);
       document.getElementById('moon-phases').textContent = ((diff / 1000 / 86400) / 29.53).toFixed(3);
     }
 
     // ---- CLOCKS ----
     function updateClocks() {
       const now = new Date();
-
-      // GMT
       const gmtH = String(now.getUTCHours()).padStart(2, '0');
       const gmtM = String(now.getUTCMinutes()).padStart(2, '0');
       const gmtS = String(now.getUTCSeconds()).padStart(2, '0');
       document.getElementById('clock-gmt').textContent = `${gmtH}:${gmtM}:${gmtS}`;
 
-      // NPT = UTC + 5:45
-      const nptOffset = 5 * 60 + 45; // minutes
+      const nptOffset = 5 * 60 + 45;
       const nptTime = new Date(now.getTime() + nptOffset * 60000);
       const nptH = String(nptTime.getUTCHours()).padStart(2, '0');
       const nptM = String(nptTime.getUTCMinutes()).padStart(2, '0');
@@ -785,13 +855,9 @@
       const grid = document.getElementById('year-grid');
       grid.innerHTML = '';
       const today = todayDOY();
-
-      // Find what day of week Jan 1, 2026 is (0=Sun..6=Sat)
-      // Jan 1, 2026 is a Thursday (4)
       const jan1 = new Date(Date.UTC(2026, 0, 1));
-      const startDow = jan1.getUTCDay(); // 0=Sun
+      const startDow = jan1.getUTCDay();
 
-      // Add empty tiles for offset
       for (let i = 0; i < startDow; i++) {
         const tile = document.createElement('div');
         tile.className = 'day-tile empty';
@@ -803,60 +869,57 @@
         const date = new Date(Date.UTC(2026, 0, 1));
         date.setUTCDate(d);
         const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        const label = `${monthNames[date.getUTCMonth()]} ${date.getUTCDate()}, 2026`;
+        const label = `${monthNames[date.getUTCMonth()]} ${date.getUTCDate()}`;
 
         if (d >= MOMENT_DOY && d <= today) {
-          // Counter days (from the moment to today)
           if (d === today) {
             tile.className = 'day-tile counter-day today';
-            tile.setAttribute('data-tooltip', `${label} — Today (Day ${d - MOMENT_DOY + 1})`);
+            tile.setAttribute('data-tooltip', `${label} — Today · Day ${d - MOMENT_DOY + 1}`);
           } else if (d >= today - 7) {
             tile.className = 'day-tile counter-day recent';
-            tile.setAttribute('data-tooltip', `${label} — Day ${d - MOMENT_DOY + 1}`);
+            tile.setAttribute('data-tooltip', `${label} · Day ${d - MOMENT_DOY + 1}`);
           } else {
             tile.className = 'day-tile counter-day';
-            tile.setAttribute('data-tooltip', `${label} — Day ${d - MOMENT_DOY + 1}`);
+            tile.setAttribute('data-tooltip', `${label} · Day ${d - MOMENT_DOY + 1}`);
           }
         } else if (d < MOMENT_DOY) {
-          // Past (before the moment)
           tile.className = 'day-tile past';
           tile.setAttribute('data-tooltip', label);
         } else {
-          // Future
           tile.className = 'day-tile future';
           tile.setAttribute('data-tooltip', label);
         }
-
         grid.appendChild(tile);
       }
 
-      // Grid subtitle
       const counterDays = Math.max(0, today - MOMENT_DOY + 1);
-      document.getElementById('grid-subtitle').textContent = `Day ${today} of ${DAYS_IN_YEAR} — ${counterDays} green`;
+      document.getElementById('grid-subtitle').textContent = `Day ${today} of ${DAYS_IN_YEAR} · ${counterDays} marked`;
     }
 
-    // ---- YEAR PROGRESS RING ----
+    // ---- PROGRESS RING ----
     function updateProgressRing() {
       const doy = todayDOY();
       const pct = Math.min(1, doy / DAYS_IN_YEAR);
-      const circumference = 2 * Math.PI * 52; // ~326.73
+      const circumference = 2 * Math.PI * 48;
       const offset = circumference * (1 - pct);
       document.getElementById('ring-fill').style.strokeDashoffset = offset;
-      document.getElementById('ring-percent').textContent = (pct * 100).toFixed(1) + '%';
+      const pctStr = (pct * 100).toFixed(1) + '%';
+      document.getElementById('ring-percent').textContent = pctStr;
+      document.getElementById('ring-pct-label').textContent = pctStr;
     }
 
     // ---- MILESTONES ----
     function buildMilestones() {
       const milestones = [
-        { name: '1 Hour', days: 0, hours: 1, icon: '~' },
-        { name: '24 Hours', days: 1, hours: 0, icon: '|' },
-        { name: '1 Week', days: 7, hours: 0, icon: '/' },
-        { name: '2 Weeks', days: 14, hours: 0, icon: '//' },
-        { name: '1 Month', days: 30, hours: 0, icon: '#' },
-        { name: '50 Days', days: 50, hours: 0, icon: '##' },
-        { name: '100 Days', days: 100, hours: 0, icon: '%' },
-        { name: '6 Months', days: 182, hours: 0, icon: '%%' },
-        { name: '1 Year', days: 365, hours: 0, icon: '&' },
+        { name: '1 Hour', days: 0, hours: 1 },
+        { name: '24 Hours', days: 1, hours: 0 },
+        { name: '1 Week', days: 7, hours: 0 },
+        { name: '2 Weeks', days: 14, hours: 0 },
+        { name: '1 Month', days: 30, hours: 0 },
+        { name: '50 Days', days: 50, hours: 0 },
+        { name: '100 Days', days: 100, hours: 0 },
+        { name: '6 Months', days: 182, hours: 0 },
+        { name: '1 Year', days: 365, hours: 0 },
       ];
 
       const grid = document.getElementById('milestones-grid');
@@ -864,7 +927,6 @@
       const now = new Date();
       const diffMs = now - THE_MOMENT;
       const diffDays = diffMs / 86400000;
-
       let foundNext = false;
 
       milestones.forEach(m => {
@@ -881,16 +943,15 @@
           month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'
         });
 
-        let statusHtml = '';
+        let statusHtml;
         if (reached) {
           statusHtml = '<div class="milestone-status done">Reached</div>';
         } else {
           const daysUntil = Math.ceil(targetDays - diffDays);
-          statusHtml = `<div class="milestone-status upcoming">${daysUntil} day${daysUntil !== 1 ? 's' : ''} away</div>`;
+          statusHtml = `<div class="milestone-status upcoming">${daysUntil}d away</div>`;
         }
 
         card.innerHTML = `
-          <span class="milestone-icon">${m.icon}</span>
           <div class="milestone-name">${m.name}</div>
           <div class="milestone-date">${dateStr}</div>
           ${statusHtml}
@@ -905,9 +966,8 @@
       chart.innerHTML = '';
       const now = new Date();
       const diffDays = Math.max(0, Math.floor((now - THE_MOMENT) / 86400000));
-      const totalWeeks = Math.min(52, Math.ceil(diffDays / 7) + 4); // show a few future weeks
-      const displayWeeks = Math.max(totalWeeks, 12); // at least 12 bars
-
+      const totalWeeks = Math.min(52, Math.ceil(diffDays / 7) + 4);
+      const displayWeeks = Math.max(totalWeeks, 12);
       const currentWeek = Math.floor(diffDays / 7);
 
       for (let w = 0; w < displayWeeks; w++) {
@@ -918,18 +978,12 @@
         const daysInThisWeek = w < currentWeek ? 7 : (w === currentWeek ? (diffDays % 7) || 1 : 0);
         const heightPct = (daysInThisWeek / 7) * 100;
 
-        if (w < currentWeek) {
-          bar.className = 'week-bar';
-        } else if (w === currentWeek) {
-          bar.className = 'week-bar current';
-        } else {
-          bar.className = 'week-bar future';
-        }
+        bar.className = w < currentWeek ? 'week-bar' : (w === currentWeek ? 'week-bar current' : 'week-bar future');
         bar.style.height = `${Math.max(heightPct, w <= currentWeek ? 15 : 5)}%`;
 
         const label = document.createElement('div');
         label.className = 'week-label';
-        label.textContent = `W${w + 1}`;
+        label.textContent = w + 1;
 
         col.appendChild(bar);
         col.appendChild(label);
@@ -942,6 +996,7 @@
 
     // ---- INIT ----
     function init() {
+      buildCellBg();
       buildYearGrid();
       buildMilestones();
       buildWeeklyChart();
@@ -954,13 +1009,19 @@
         updateClocks();
       }, 1000);
 
-      // Rebuild grid and milestones every 5 minutes (for day change)
       setInterval(() => {
         buildYearGrid();
         buildMilestones();
         buildWeeklyChart();
         updateProgressRing();
       }, 300000);
+
+      // Rebuild cell bg on resize (debounced)
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(buildCellBg, 300);
+      });
     }
 
     document.addEventListener('DOMContentLoaded', init);
